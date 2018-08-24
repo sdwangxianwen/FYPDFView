@@ -11,6 +11,7 @@
 #import <Foundation/Foundation.h>
 #import "PDFView.h"
 #import "PdfCache.h"
+//#import "PDFCacheOptimize.h"
 
 static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
 
@@ -21,6 +22,7 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     UICollectionView *_collectionView;
     CGPDFDocumentRef _docRef; //需要获取的PDF资源文件
     PdfCache *_cache;
+//    PDFCacheOptimize *_cache;
 }
 @property(nonatomic,assign) NSInteger pages;
 @property(nonatomic,strong) UIImage  *image;
@@ -58,9 +60,6 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     _collectionView.showsVerticalScrollIndicator = NO;
     _collectionView.showsHorizontalScrollIndicator = NO;
     _collectionView.bounces = NO;
-    
-
-    
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
@@ -70,6 +69,13 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     PDFCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:PDFCollectionViewCellID forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
     cell.page = indexPath.row;
+//    if (![_cache loadPage:(int)indexPath.row complete:^(int page, UIImage *image) {
+//        if (page == cell.page) {
+//            cell.imageView.image = image;
+//        }
+//    } object:@"22"]) {
+//        cell.imageView.image = [UIImage imageNamed:@"place"];
+//    }
     if (![_cache loadPage:indexPath.row complete:^(int page, UIImage *image) {
         if (page == cell.page) {
             cell.imageView.image = image;

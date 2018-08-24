@@ -19,6 +19,7 @@
 		2166DF23212D028C00CC7B6E /* PDFCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF22212D028C00CC7B6E /* PDFCollectionViewCell.m */; };
 		2166DF26212D141F00CC7B6E /* PDFView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF25212D141F00CC7B6E /* PDFView.m */; };
 		2166DF29212D589700CC7B6E /* PdfCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF28212D589700CC7B6E /* PdfCache.m */; };
+		2166DF2F212EB09700CC7B6E /* PDFCacheOptimize.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,8 @@
 		2166DF25212D141F00CC7B6E /* PDFView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PDFView.m; sourceTree = "<group>"; };
 		2166DF27212D589700CC7B6E /* PdfCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PdfCache.h; sourceTree = "<group>"; };
 		2166DF28212D589700CC7B6E /* PdfCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PdfCache.m; sourceTree = "<group>"; };
+		2166DF2D212EB09700CC7B6E /* PDFCacheOptimize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PDFCacheOptimize.h; sourceTree = "<group>"; };
+		2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PDFCacheOptimize.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +121,8 @@
 				2166DEF0212D023F00CC7B6E /* ViewController.m */,
 				2166DF24212D141F00CC7B6E /* PDFView.h */,
 				2166DF25212D141F00CC7B6E /* PDFView.m */,
+				2166DF2D212EB09700CC7B6E /* PDFCacheOptimize.h */,
+				2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */,
 				2166DF27212D589700CC7B6E /* PdfCache.h */,
 				2166DF28212D589700CC7B6E /* PdfCache.m */,
 				2166DF21212D028C00CC7B6E /* PDFCollectionViewCell.h */,
@@ -284,6 +289,7 @@
 				2166DF26212D141F00CC7B6E /* PDFView.m in Sources */,
 				2166DF23212D028C00CC7B6E /* PDFCollectionViewCell.m in Sources */,
 				2166DEEE212D023F00CC7B6E /* AppDelegate.m in Sources */,
+				2166DF2F212EB09700CC7B6E /* PDFCacheOptimize.m in Sources */,
 				2166DF29212D589700CC7B6E /* PdfCache.m in Sources */,
 				2166DEFF212D024000CC7B6E /* main.m in Sources */,
 				2166DEF7212D023F00CC7B6E /* FYPDF.xcdatamodeld in Sources */,
