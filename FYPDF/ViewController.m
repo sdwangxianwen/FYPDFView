@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 #import "PDFView.h"
 #import "PdfCache.h"
-//#import "PDFCacheOptimize.h"
+#import "PDFCacheOptimize.h"
 
 static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
 
@@ -22,7 +22,7 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     UICollectionView *_collectionView;
     CGPDFDocumentRef _docRef; //需要获取的PDF资源文件
     PdfCache *_cache;
-//    PDFCacheOptimize *_cache;
+    PDFCacheOptimize *_cacheop;
 }
 @property(nonatomic,assign) NSInteger pages;
 @property(nonatomic,strong) UIImage  *image;
@@ -41,9 +41,14 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _cache = [[PdfCache alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.height, [UIScreen mainScreen].bounds.size.width)];
-    [_cache openDocument:[NSURL URLWithString:PDFURL]];
-    self.pages = [_cache totalPage];
+//    _cache = [[PdfCache alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.height, [UIScreen mainScreen].bounds.size.width)];
+//    [_cache openDocument:[NSURL URLWithString:PDFURL]];
+//    self.pages = [_cache totalPage];
+    
+    _cacheop = [[PDFCacheOptimize alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
+    [_cacheop openDocument:[NSURL URLWithString:PDFURL]];
+    self.pages = [_cacheop totalPage];
+    
 
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.itemSize = CGSizeMake([UIScreen mainScreen].bounds.size.height, [UIScreen mainScreen].bounds.size.width);
@@ -69,20 +74,23 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     PDFCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:PDFCollectionViewCellID forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
     cell.page = indexPath.row;
-//    if (![_cache loadPage:(int)indexPath.row complete:^(int page, UIImage *image) {
+    [_cacheop setPreloadPage:(int)indexPath.row];
+    if (![_cacheop loadPage:(int)indexPath.row complete:^(int page, UIImage *image) {
+        if (page == cell.page) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+               cell.imageView.image = image;
+            });
+        }
+    } object:@"22"]) {
+        cell.imageView.image = [UIImage imageNamed:@"place"];
+    }
+//    if (![_cache loadPage:indexPath.row complete:^(int page, UIImage *image) {
 //        if (page == cell.page) {
 //            cell.imageView.image = image;
 //        }
-//    } object:@"22"]) {
+//    }]){
 //        cell.imageView.image = [UIImage imageNamed:@"place"];
 //    }
-    if (![_cache loadPage:indexPath.row complete:^(int page, UIImage *image) {
-        if (page == cell.page) {
-            cell.imageView.image = image;
-        }
-    }]){
-        cell.imageView.image = [UIImage imageNamed:@"place"];
-    }
     return cell;
 }
 

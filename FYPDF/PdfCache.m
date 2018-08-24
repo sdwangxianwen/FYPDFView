@@ -7,12 +7,14 @@
 //
 
 #import "PdfCache.h"
+#import <CommonCrypto/CommonDigest.h>
 
 @interface PdfCache () {
     NSCache *_cache;
     CGPDFDocumentRef _pdfDoc;
     CGSize _imageSize;
     NSString * _documentDirectory;
+    NSURL *_url;
 }
 
 @end
@@ -41,6 +43,7 @@
 }
 -(instancetype)openDocument:(NSURL *)url{
     [self clearDoc];
+    _url = url;
     CFURLRef refURL = CFBridgingRetain(url);
     _pdfDoc = CGPDFDocumentCreateWithURL(refURL);
     CFRelease(refURL);
@@ -101,14 +104,15 @@
 
 //读取
 -(UIImage *)readImage:(int)page {
-    NSString *path = [NSString stringWithFormat:@"%@/Image%d", _documentDirectory,page];
+    NSString *md5Path = [self MD5ForLower32Bate:_url.absoluteString];
+    NSString *path = [NSString stringWithFormat:@"%@/Image%@%d", _documentDirectory,md5Path,page];
     UIImage *image = [[UIImage alloc] initWithContentsOfFile:path];
     return image;
 }
-
+//保存
 -(void)saveImage:(UIImage *)image page:(int)page {
-   
-    NSString *path = [NSString stringWithFormat:@"%@/Image%d", _documentDirectory,page];
+    NSString *md5Path = [self MD5ForLower32Bate:_url.absoluteString];
+    NSString *path = [NSString stringWithFormat:@"%@/Image%@%d", _documentDirectory,md5Path,page];
     NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
     [imageData writeToFile:path atomically:YES];
 }
@@ -172,5 +176,22 @@
         }
     }
 }
+
+#pragma mark - 32位 小写
+-(NSString *)MD5ForLower32Bate:(NSString *)str{
+    
+    //要进行UTF8的转码
+    const char* input = [str UTF8String];
+    unsigned char result[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(input, (CC_LONG)strlen(input), result);
+    
+    NSMutableString *digest = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    for (NSInteger i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+        [digest appendFormat:@"%02x", result[i]];
+    }
+    
+    return digest;
+}
+
 
 @end

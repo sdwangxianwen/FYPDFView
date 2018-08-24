@@ -168,6 +168,7 @@ typedef void(^TaskBlock)(void);
         }
     }
     if (cbs.count>0) {
+        
         [_cache setObject:image forKey:@(page)];
     }
     for (NSDictionary *dic in cbs) {
@@ -288,7 +289,6 @@ typedef void(^TaskBlock)(void);
                 [arrM addObject:dict[kREQUESTPAGE]];
             }
         }
-        
         for (NSString *pageString in arrM) {
             [_pageReading removeObject:pageString];
             [_pageDrawing removeObject:pageString];
@@ -307,23 +307,22 @@ typedef void(^TaskBlock)(void);
     }
     NSMutableArray *arrm = [NSMutableArray array];
     for (int i = 0; i < maxIndex - index; i++) {
-        if ([_pageDrawing componentsJoinedByString:@(index + i).description]) {
+        if ([_pageReading componentsJoinedByString:@(index + i).description]) {
             //说明index+i的页面存在
             [arrm addObject:@(index + i)];
         }
-        for (int i = 0; i <= index; i++) {
-            if ([_pageDrawing componentsJoinedByString:@(index - i).description]) {
-                //说明index -i 的页面存在
-                [arrm addObject:@(index - i)];
-            }
+    }
+    for (int i = 0; i <= index; i++) {
+        if ([_pageReading componentsJoinedByString:@(index - i).description]) {
+            //说明index -i 的页面存在
+            [arrm addObject:@(index - i)];
         }
-        if (arrm.count == maxIndex + 1) {
-            return -1;
-        }
+    }
+    if (arrm.count == maxIndex) {
+        return -1;
     }
     return index;
 }
-
 
 //优先加载的页面,以这个页面为中心
 -(void)setPreloadPage:(int)page {
