@@ -17,6 +17,7 @@
     if (self) {
         _imageView = [[UIImageView alloc] initWithFrame:self.bounds];
         [self.contentView addSubview:_imageView];
+        _imageView.contentMode = UIViewContentModeScaleAspectFill;
         UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
         [btn setTitle:@"清除缓存" forState:(UIControlStateNormal)];
         [btn setBackgroundColor:[UIColor brownColor]];

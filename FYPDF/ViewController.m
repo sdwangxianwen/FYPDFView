@@ -9,11 +9,11 @@
 #import "ViewController.h"
 #import "PDFCollectionViewCell.h"
 #import <Foundation/Foundation.h>
-#import "PDFView.h"
 #import "PdfCache.h"
 #import "PDFCacheOptimize.h"
 #import <QuickLook/QuickLook.h>
 #import "AFNetworking.h"
+#import "PDFCacheOptimize.h"
 
 #import "ZPDFReaderController.h"
 
@@ -21,7 +21,7 @@
 static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
 
 
-#define PDFURL @"http://s2.51talk.com/textbook/2018/0122/5dj8vyv9b002020008g62b00000080u1.pdf"
+#define PDFURL @"http://s2.51talk.com/textbook/2018/0123/5djlmq9fx002020008g62b0000005cu1.pdf"
 
 @interface ViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,QLPreviewControllerDataSource> {
     UICollectionView *_collectionView;
@@ -52,9 +52,7 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     [super viewDidLoad];
     [self downLoad];
     index = 0;
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"QLPreviewController" style:(UIBarButtonItemStyleDone) target:self action:@selector(demo2)];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"pageviewcontroller" style:(UIBarButtonItemStyleDone) target:self action:@selector(demo3)];
-    [self demo1];
+//    [self demo1];
 }
 //MARK:使用pageVIew,效果有卡顿
 -(void)demo3 {
@@ -87,8 +85,9 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
         NSURL *documentsDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
         NSURL *url = [documentsDirectoryURL URLByAppendingPathComponent:fileName];
         self.fileURL = url;
+        [self demo1];
         //        [self presentViewController:_previewController animated:YES completion:nil];
-        [self.navigationController pushViewController:_previewController animated:YES];
+//        [self.navigationController pushViewController:_previewController animated:YES];
     }else {
         
         NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
@@ -99,7 +98,8 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
             return url;
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
             self.fileURL = filePath;
-            [self.navigationController pushViewController:_previewController animated:YES];
+            [self demo1];
+//            [self.navigationController pushViewController:_previewController animated:YES];
         }];
         [downloadTask resume];
     }
@@ -125,18 +125,19 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
 }
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView {
     index = scrollView.contentOffset.x/self.view.bounds.size.width;
+    
 }
 
 
 //MARK:将pdf转成图片再查看
 -(void)demo1 {
-    _cache = [[PdfCache alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.height, [UIScreen mainScreen].bounds.size.width)];
-    [_cache openDocument:[NSURL URLWithString:PDFURL]];
-    self.pages = [_cache totalPage];
+//    _cache = [[PdfCache alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.height, [UIScreen mainScreen].bounds.size.width)];
+//    [_cache openDocument:[NSURL URLWithString:PDFURL]];
+//    self.pages = [_cache totalPage];
     
-    //    _cacheop = [[PDFCacheOptimize alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
-    //    [_cacheop openDocument:[NSURL URLWithString:PDFURL]];
-    //    self.pages = [_cacheop totalPage];
+    _cacheop = [[PDFCacheOptimize alloc] init:CGSizeMake([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
+    [_cacheop openDocument:self.fileURL];
+    self.pages = [_cacheop totalPage];
     
     
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
@@ -198,24 +199,26 @@ static NSString * const PDFCollectionViewCellID = @"PDFCollectionViewCellID";
     cell.backgroundColor = [UIColor whiteColor];
     cell.page = indexPath.row;
     [_cacheop setPreloadPage:(int)indexPath.row];
-//    if (![_cacheop loadPage:(int)indexPath.row complete:^(int page, UIImage *image) {
-//        if (page == cell.page) {
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//               cell.imageView.image = image;
-//            });
-//        }
-//    } object:@"22"]) {
-//        cell.imageView.image = [UIImage imageNamed:@"place"];
-//    }
-    if (![_cache loadPage:indexPath.row complete:^(int page, UIImage *image) {
+    if (![_cacheop loadPage:(int)indexPath.row complete:^(int page, UIImage *image) {
         if (page == cell.page) {
-            cell.imageView.image = image;
+//            dispatch_async(dispatch_get_main_queue(), ^{
+               cell.imageView.image = image;
+//            });
         }
-    }]){
-        cell.imageView.image = [UIImage imageNamed:@"happyPracticeHolder"];
+    } object:cell]) {
+        cell.imageView.image = [UIImage imageNamed:@"place"];
     }
+    
+//    if (![_cache loadPage:indexPath.row complete:^(int page, UIImage *image) {
+//        if (page == cell.page) {
+//            cell.imageView.image = image;
+//        }
+//    }]){
+//        cell.imageView.image = [UIImage imageNamed:@"happyPracticeHolder"];
+//    }
     return cell;
 }
+
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
  

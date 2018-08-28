@@ -11,19 +11,11 @@
 #define kREQUESTPAGE @"page"
 #define kREQUESTBLOCK @"block"
 #define kREQUESTOBJECT @"object"
-//#define kREQUESTPDF @"pdf"
-
-
-typedef NS_ENUM(int,PageStatus) {
-    PageStatusNone,
-    PageStatusDone,
-    PageStatusLoading,
-};
 
 typedef void(^TaskBlock)(void);
 
 @interface PDFCacheOptimize (){
-    int _openCount;
+    int _openCount;  //打开文档的计数
     NSCache *_cache; //仅仅ui线程使用
     CGPDFDocumentRef _pdfDoc; // 跨线程
     CGSize _imageSize; // 跨线程
@@ -34,7 +26,6 @@ typedef void(^TaskBlock)(void);
     TaskBlock _taskBlock;
     NSMutableArray *_pendingRequests; //加载请求
 }
-
 @end
 
 @implementation PDFCacheOptimize
@@ -81,7 +72,6 @@ typedef void(^TaskBlock)(void);
     CFURLRef refURL = CFBridgingRetain(url);
     _pdfDoc = CGPDFDocumentCreateWithURL(refURL);
     CFRelease(refURL);
-
     [self onPdfOpened];
     return self;
 }
@@ -113,9 +103,10 @@ typedef void(^TaskBlock)(void);
     // 没有请求
     if (index == -1) {
         // 找需要优先处理的页面
-        index = [self findNextPage:_preloadPage maxIndex:totalPages];
+        index = [self.class findNextPage:_preloadPage maxIndex:totalPages inDir:_documentDirectory];
     }
     
+    NSLog(@"pdf2image:%d\n",index);
     // index不合法
     if (index<0||index>=totalPages) {
         CGPDFDocumentRelease(pdfTempDoc);
@@ -153,7 +144,6 @@ typedef void(^TaskBlock)(void);
     if (!_cache) {
         return;
     }
-    
     @synchronized(self) {
         // 移除这个页面 不需要读了
         [_pageReading removeObject:@(page)];
@@ -168,7 +158,6 @@ typedef void(^TaskBlock)(void);
         }
     }
     if (cbs.count>0) {
-        
         [_cache setObject:image forKey:@(page)];
     }
     for (NSDictionary *dic in cbs) {
@@ -176,24 +165,22 @@ typedef void(^TaskBlock)(void);
         PdfCacheCompleteBlock complete = [dic objectForKey:kREQUESTBLOCK];
         complete(page,image);
     }
-    [_cache setObject:image forKey:@(page)];
 }
                        
 +(UIImage *)drawPdf:(CGPDFDocumentRef) doc size:(CGSize)size page:(int)page {
     UIImage *image;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIGraphicsBeginImageContext(size);
-        CGContextRef context = UIGraphicsGetCurrentContext();
-        CGContextTranslateCTM(context,0.0,size.height);
-        CGContextScaleCTM(context,1.0, -1.0);
-        CGPDFPageRef  pageRef =CGPDFDocumentGetPage(doc,page + 1);
-        CGContextSaveGState(context);//记录当前绘制环境，防止多次绘画
-        CGAffineTransform  pdfTransForm =CGPDFPageGetDrawingTransform(pageRef,kCGPDFCropBox,CGRectMake(0, 0, size.width, size.height),0,true);//创建一个仿射变换的参数给函数。
-        CGContextConcatCTM(context, pdfTransForm);//把创建的仿射变换参数和上下文环境联系起来
-        CGContextDrawPDFPage(context, pageRef);//把得到的指定页的PDF数据绘制到视图上
-        CGContextRestoreGState(context);//恢复图形状态
-        CGPDFDocumentRelease(doc);
-    });
+    
+    UIGraphicsBeginImageContext(size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextTranslateCTM(context,0.0,size.height);
+    CGContextScaleCTM(context,1.0, -1.0);
+    CGPDFPageRef  pageRef =CGPDFDocumentGetPage(doc,page + 1);
+    CGContextSaveGState(context);//记录当前绘制环境，防止多次绘画
+    CGAffineTransform  pdfTransForm =CGPDFPageGetDrawingTransform(pageRef,kCGPDFCropBox,CGRectMake(0, 0, size.width, size.height),0,true);//创建一个仿射变换的参数给函数。
+    CGContextConcatCTM(context, pdfTransForm);//把创建的仿射变换参数和上下文环境联系起来
+    CGContextDrawPDFPage(context, pageRef);//把得到的指定页的PDF数据绘制到视图上
+    CGContextRestoreGState(context);//恢复图形状态
+//    CGPDFDocumentRelease(doc);
     image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
@@ -201,6 +188,13 @@ typedef void(^TaskBlock)(void);
 
 -(int)totalPage {
     return _pdfDoc ? (int)CGPDFDocumentGetNumberOfPages(_pdfDoc): 0;
+}
+
++(BOOL) isFileExist:(NSString *)dir page:(int)page {
+    NSString *path = [NSString stringWithFormat:@"%@/Image%d", dir,page];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL result = [fileManager fileExistsAtPath:path];
+    return result;
 }
 
 //读取
@@ -298,35 +292,47 @@ typedef void(^TaskBlock)(void);
 
 // 查找下一个需要处理的页面 检查文件是否存在 0 +1 -1 +2 -2 ...
 // 如果都存在 返回-1
--(int)findNextPage:(int)index maxIndex:(int)maxIndex {
++(int)findNextPage:(int)index maxIndex:(int)maxIndex inDir:(NSString*)dir {
+    BOOL begin = YES;
+    BOOL end = YES;
     if (index >= maxIndex) {
         index = maxIndex;
+        end = NO; // 超过了终点
     }
     if (index < 0) {
         index = 0;
+        begin = NO; // 超过了起点
     }
-    NSMutableArray *arrm = [NSMutableArray array];
-    for (int i = 0; i < maxIndex - index; i++) {
-        if ([_pageReading componentsJoinedByString:@(index + i).description]) {
-            //说明index+i的页面存在
-            [arrm addObject:@(index + i)];
+    
+    int res = -1;
+    int offset = 0;
+    while (begin||end) {
+        res = index + offset;
+        offset = (offset<=0)?(-offset+1):(-offset);
+        if (res<0) {
+            begin = NO; // 超过起点了
+            continue;
+        } else if (res>=maxIndex) {
+            end = NO; // 超过终点了
+            continue;
+        }
+        if (![self.class isFileExist:dir page:res]) {
+            return res; // 这一页不存在
         }
     }
-    for (int i = 0; i <= index; i++) {
-        if ([_pageReading componentsJoinedByString:@(index - i).description]) {
-            //说明index -i 的页面存在
-            [arrm addObject:@(index - i)];
-        }
-    }
-    if (arrm.count == maxIndex) {
-        return -1;
-    }
-    return index;
+    return -1; // 所有页面都存在
 }
 
 //优先加载的页面,以这个页面为中心
 -(void)setPreloadPage:(int)page {
     _preloadPage = page;
 }
+
++(CGFloat)screenScale {
+    CGFloat scale = ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) ? [[[UIScreen mainScreen] valueForKey:@"scale"] floatValue] : 1.0f;
+    return scale;
+}
+
+
 
 @end

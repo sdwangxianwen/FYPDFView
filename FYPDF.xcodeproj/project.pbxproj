@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		213C01C121351B66002B0E0A /* NSString+MD5.m in Sources */ = {isa = PBXBuildFile; fileRef = 213C01BF21351B66002B0E0A /* NSString+MD5.m */; };
 		2166DEEE212D023F00CC7B6E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DEED212D023F00CC7B6E /* AppDelegate.m */; };
 		2166DEF1212D023F00CC7B6E /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DEF0212D023F00CC7B6E /* ViewController.m */; };
 		2166DEF4212D023F00CC7B6E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2166DEF2212D023F00CC7B6E /* Main.storyboard */; };
@@ -17,7 +18,6 @@
 		2166DF09212D024000CC7B6E /* FYPDFTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF08212D024000CC7B6E /* FYPDFTests.m */; };
 		2166DF14212D024000CC7B6E /* FYPDFUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF13212D024000CC7B6E /* FYPDFUITests.m */; };
 		2166DF23212D028C00CC7B6E /* PDFCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF22212D028C00CC7B6E /* PDFCollectionViewCell.m */; };
-		2166DF26212D141F00CC7B6E /* PDFView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF25212D141F00CC7B6E /* PDFView.m */; };
 		2166DF29212D589700CC7B6E /* PdfCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF28212D589700CC7B6E /* PdfCache.m */; };
 		2166DF2F212EB09700CC7B6E /* PDFCacheOptimize.m in Sources */ = {isa = PBXBuildFile; fileRef = 2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */; };
 		2166DF56212FE0BC00CC7B6E /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 2166DF31212FE0BC00CC7B6E /* LICENSE */; };
@@ -61,6 +61,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		213C01BF21351B66002B0E0A /* NSString+MD5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+MD5.m"; sourceTree = "<group>"; };
+		213C01C021351B66002B0E0A /* NSString+MD5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+MD5.h"; sourceTree = "<group>"; };
 		2166DEE9212D023F00CC7B6E /* FYPDF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FYPDF.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2166DEEC212D023F00CC7B6E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		2166DEED212D023F00CC7B6E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -80,8 +82,6 @@
 		2166DF15212D024000CC7B6E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2166DF21212D028C00CC7B6E /* PDFCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PDFCollectionViewCell.h; sourceTree = "<group>"; };
 		2166DF22212D028C00CC7B6E /* PDFCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PDFCollectionViewCell.m; sourceTree = "<group>"; };
-		2166DF24212D141F00CC7B6E /* PDFView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PDFView.h; sourceTree = "<group>"; };
-		2166DF25212D141F00CC7B6E /* PDFView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PDFView.m; sourceTree = "<group>"; };
 		2166DF27212D589700CC7B6E /* PdfCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PdfCache.h; sourceTree = "<group>"; };
 		2166DF28212D589700CC7B6E /* PdfCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PdfCache.m; sourceTree = "<group>"; };
 		2166DF2D212EB09700CC7B6E /* PDFCacheOptimize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PDFCacheOptimize.h; sourceTree = "<group>"; };
@@ -185,10 +185,10 @@
 				2166DEED212D023F00CC7B6E /* AppDelegate.m */,
 				2166DEEF212D023F00CC7B6E /* ViewController.h */,
 				2166DEF0212D023F00CC7B6E /* ViewController.m */,
-				2166DF24212D141F00CC7B6E /* PDFView.h */,
-				2166DF25212D141F00CC7B6E /* PDFView.m */,
 				2166DF2D212EB09700CC7B6E /* PDFCacheOptimize.h */,
 				2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */,
+				213C01C021351B66002B0E0A /* NSString+MD5.h */,
+				213C01BF21351B66002B0E0A /* NSString+MD5.m */,
 				2166DF27212D589700CC7B6E /* PdfCache.h */,
 				2166DF28212D589700CC7B6E /* PdfCache.m */,
 				2166DF21212D028C00CC7B6E /* PDFCollectionViewCell.h */,
@@ -429,7 +429,6 @@
 				2166DEF1212D023F00CC7B6E /* ViewController.m in Sources */,
 				2166DF62212FE0BC00CC7B6E /* AFHTTPSessionManager.m in Sources */,
 				2166DF66212FE0BC00CC7B6E /* AFSecurityPolicy.m in Sources */,
-				2166DF26212D141F00CC7B6E /* PDFView.m in Sources */,
 				2166DF5E212FE0BC00CC7B6E /* UIWebView+AFNetworking.m in Sources */,
 				2166DF60212FE0BC00CC7B6E /* AFImageDownloader.m in Sources */,
 				2166DF63212FE0BC00CC7B6E /* AFURLSessionManager.m in Sources */,
@@ -448,6 +447,7 @@
 				2166DF2F212EB09700CC7B6E /* PDFCacheOptimize.m in Sources */,
 				2166DF29212D589700CC7B6E /* PdfCache.m in Sources */,
 				2166DFA8212FF3C300CC7B6E /* ZPDFPageModel.m in Sources */,
+				213C01C121351B66002B0E0A /* NSString+MD5.m in Sources */,
 				2166DEFF212D024000CC7B6E /* main.m in Sources */,
 				2166DFA7212FF3C300CC7B6E /* ZPDFReaderController.m in Sources */,
 				2166DF5C212FE0BC00CC7B6E /* UIButton+AFNetworking.m in Sources */,
