@@ -17,10 +17,10 @@
     if (self) {
         _imageView = [[UIImageView alloc] initWithFrame:self.bounds];
         [self.contentView addSubview:_imageView];
-        _imageView.contentMode = UIViewContentModeScaleAspectFill;
+        _imageView.contentMode = UIViewContentModeScaleAspectFit;
         UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
         [btn setTitle:@"清除缓存" forState:(UIControlStateNormal)];
-        [btn setBackgroundColor:[UIColor brownColor]];
+//        [btn setBackgroundColor:[UIColor brownColor]];
         [self.contentView addSubview:btn];
         [btn addTarget:self action:@selector(clean) forControlEvents:(UIControlEventTouchUpInside)];
     }

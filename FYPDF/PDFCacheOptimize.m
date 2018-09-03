@@ -7,12 +7,11 @@
 //
 
 #import "PDFCacheOptimize.h"
+#import "NSString+MD5.h"
 
 #define kREQUESTPAGE @"page"
 #define kREQUESTBLOCK @"block"
 #define kREQUESTOBJECT @"object"
-
-typedef void(^TaskBlock)(void);
 
 @interface PDFCacheOptimize (){
     int _openCount;  //打开文档的计数
@@ -23,8 +22,9 @@ typedef void(^TaskBlock)(void);
     NSMutableArray* _pageReading; // 需要读取文件的
     NSMutableArray* _pageDrawing; // 需要画的
     int _preloadPage; //优先加载的页面
-    TaskBlock _taskBlock;
+    dispatch_block_t _taskBlock;
     NSMutableArray *_pendingRequests; //加载请求
+    NSURL *_url;  //pdf的URL
 }
 @end
 
@@ -43,9 +43,6 @@ typedef void(^TaskBlock)(void);
         _pendingRequests = [NSMutableArray array];
         _pageReading = [NSMutableArray array];
         _pageDrawing = [NSMutableArray array];
-        //创建一个沙盒存储
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        _documentDirectory = [paths objectAtIndex:0];
     }
     return self;
 }
@@ -53,14 +50,37 @@ typedef void(^TaskBlock)(void);
 #pragma mark:每次打开文档都会打开block,获取沙盒存储中的图片
 -(void)onPdfOpened {
     _preloadPage = 0;
+    self.totalPages = [self totalPage];
     int localCount = ++_openCount;
     typeof(self) __weak weakSelf = self;
+    __block dispatch_block_t tempBlock;
     _taskBlock = ^() {
-        [weakSelf pdfToImage:localCount];
+        //强引用一下
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        tempBlock = _taskBlock;
+        if (!strongSelf) {
+            return;
+        }
+        if ([strongSelf pdfToImage:localCount]) {
+            //图片转换完成,关闭_doc
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf releasePdfDoc];
+            });
+        } else {
+            if (localCount == _openCount) {
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), tempBlock);
+            }
+        }
     };
     // 首次触发任务
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),_taskBlock);
 }
+
+//关闭_doc,图片转换完成后,不需要一直打开
+-(void)releasePdfDoc {
+    CGPDFDocumentRelease(_pdfDoc);
+}
+
 -(instancetype)bindDocument:(CGPDFDocumentRef)docRef {
     [self clearDoc];
     _pdfDoc = CGPDFDocumentRetain(docRef);
@@ -68,6 +88,13 @@ typedef void(^TaskBlock)(void);
     return self;
 }
 -(instancetype)openDocument:(NSURL *)url{
+    _url = url;
+    //创建一个沙盒存储
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    // 在Documents文件夹中创建文件夹
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    _documentDirectory = [NSString stringWithFormat:@"%@/SkipICloud/pdfs/%@",[paths objectAtIndex:0],[url.absoluteString MD5]];
+    [fileManager createDirectoryAtPath:_documentDirectory withIntermediateDirectories:YES attributes:nil error:nil];
     [self clearDoc];
     CFURLRef refURL = CFBridgingRetain(url);
     _pdfDoc = CGPDFDocumentCreateWithURL(refURL);
@@ -77,9 +104,9 @@ typedef void(^TaskBlock)(void);
 }
 
 //把PDF装换成image,后台任务
--(void)pdfToImage:(int)openCount {
+-(BOOL)pdfToImage:(int)openCount {
     if (openCount!=_openCount) {
-        return;
+        return YES;
     }
     int index = -1;
     CGPDFDocumentRef pdfTempDoc;
@@ -96,9 +123,9 @@ typedef void(^TaskBlock)(void);
     }
     
     if (!pdfTempDoc) {
-        return;
+        return YES;
     }
-
+    
     int totalPages = (int)CGPDFDocumentGetNumberOfPages(_pdfDoc);
     // 没有请求
     if (index == -1) {
@@ -111,23 +138,18 @@ typedef void(^TaskBlock)(void);
     if (index<0||index>=totalPages) {
         CGPDFDocumentRelease(pdfTempDoc);
         pdfTempDoc = nil;
-        return;
+        return YES;
     }
-    
     // 绘制
     //真实绘制图片
     UIImage* image = [self.class drawPdf:pdfTempDoc size:imageSize page:index];
     CGPDFDocumentRelease(pdfTempDoc);
     pdfTempDoc = nil;
-
     // 保存
     [self saveImage:image page:index];
-    
-    dispatch_block_t blk = nil;
     @synchronized(self) {
         // 移除这个页面 不需要绘制了
         [_pageDrawing removeObject:@(index)];
-        blk = _taskBlock;
     }
     // 查看是否需要触发界面更新
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -135,9 +157,7 @@ typedef void(^TaskBlock)(void);
     });
     
     // 触发下一次任务
-    if (blk) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), blk);
-    }
+    return NO;
 }
 
 -(void)onLoadFinish:(UIImage *)image page:(int)page {
@@ -166,21 +186,31 @@ typedef void(^TaskBlock)(void);
         complete(page,image);
     }
 }
-                       
+
 +(UIImage *)drawPdf:(CGPDFDocumentRef) doc size:(CGSize)size page:(int)page {
     UIImage *image;
+    CGPDFPageRef pageRef = CGPDFDocumentGetPage(doc,page + 1);
+    CGRect pdfFrame = CGPDFPageGetBoxRect(pageRef, kCGPDFMediaBox);
+    CGFloat pdfWidth = pdfFrame.size.width; //获取宽度
+    CGFloat pdfHeight = pdfFrame.size.height; //获取高度
+    CGFloat scaleW = size.width /pdfWidth;
+    CGFloat scaleH = size.height/pdfHeight;
+    CGFloat scale = 1.0;
+    if (pdfWidth > size.width || pdfHeight > size.height) {
+        scale = scaleW < scaleH ? scaleW : scaleH;
+    }
+    pdfFrame.size = CGSizeMake(pdfWidth *scale, pdfHeight *scale);
     
-    UIGraphicsBeginImageContext(size);
+    UIGraphicsBeginImageContext(pdfFrame.size);
     CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextTranslateCTM(context,0.0,size.height);
+    CGContextTranslateCTM(context,0.0,pdfFrame.size.height);
     CGContextScaleCTM(context,1.0, -1.0);
-    CGPDFPageRef  pageRef =CGPDFDocumentGetPage(doc,page + 1);
+    
     CGContextSaveGState(context);//记录当前绘制环境，防止多次绘画
-    CGAffineTransform  pdfTransForm =CGPDFPageGetDrawingTransform(pageRef,kCGPDFCropBox,CGRectMake(0, 0, size.width, size.height),0,true);//创建一个仿射变换的参数给函数。
+    CGAffineTransform  pdfTransForm =CGPDFPageGetDrawingTransform(pageRef,kCGPDFCropBox,CGRectMake(pdfFrame.origin.x, pdfFrame.origin.y, pdfWidth*scale, pdfHeight*scale),0,true);//创建一个仿射变换的参数给函数。
     CGContextConcatCTM(context, pdfTransForm);//把创建的仿射变换参数和上下文环境联系起来
     CGContextDrawPDFPage(context, pageRef);//把得到的指定页的PDF数据绘制到视图上
     CGContextRestoreGState(context);//恢复图形状态
-//    CGPDFDocumentRelease(doc);
     image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
@@ -190,24 +220,23 @@ typedef void(^TaskBlock)(void);
     return _pdfDoc ? (int)CGPDFDocumentGetNumberOfPages(_pdfDoc): 0;
 }
 
-+(BOOL) isFileExist:(NSString *)dir page:(int)page {
-    NSString *path = [NSString stringWithFormat:@"%@/Image%d", dir,page];
++(BOOL) isFileExist:(NSString *)dir {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    BOOL result = [fileManager fileExistsAtPath:path];
+    BOOL result = [fileManager fileExistsAtPath:dir];
     return result;
 }
 
 //读取
 -(UIImage *)readImage:(int)page {
-    NSString *path = [NSString stringWithFormat:@"%@/Image%d", _documentDirectory,page]; //
-    UIImage *image = [[UIImage alloc] initWithContentsOfFile:path];
+    NSString *path = [NSString stringWithFormat:@"%@/Image%d", _documentDirectory, page]; //
+    UIImage *image = [UIImage imageWithContentsOfFile:path];
     return image;
 }
 
 -(void)saveImage:(UIImage *)image page:(int)page {
-    NSString *path = [NSString stringWithFormat:@"%@/Image%d", _documentDirectory,page];
+    NSString *path = [NSString stringWithFormat:@"%@/Image%d.png", _documentDirectory, page]; //
     NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
-    [imageData writeToFile:path atomically:YES];
+    [[NSFileManager defaultManager] createFileAtPath:path contents:imageData attributes:nil];
 }
 
 -(BOOL)loadPage:(int)page complete:(PdfCacheCompleteBlock)complete object:(id)object {
@@ -241,7 +270,6 @@ typedef void(^TaskBlock)(void);
                 }
             }
         });
-        
         return NO;
     }
 }
@@ -272,21 +300,18 @@ typedef void(^TaskBlock)(void);
         }
     }
 }
- //取消上一个Block
+//取消上一个Block
 -(void)cancelLoad:(id)object {
     // 找到==object的所有request
-    // 遍历这些request中的page 移除所有的reading+drawing
+    // 将他们移除
     NSMutableArray *arrM = [NSMutableArray array];
     @synchronized(self) {
         for (NSDictionary *dict in _pendingRequests) {
             if ([dict[kREQUESTOBJECT] isEqual:object]) {
-                [arrM addObject:dict[kREQUESTPAGE]];
+                [arrM addObject:dict];
             }
         }
-        for (NSString *pageString in arrM) {
-            [_pageReading removeObject:pageString];
-            [_pageDrawing removeObject:pageString];
-        }
+        [arrM removeAllObjects];
     }
 }
 
@@ -316,7 +341,8 @@ typedef void(^TaskBlock)(void);
             end = NO; // 超过终点了
             continue;
         }
-        if (![self.class isFileExist:dir page:res]) {
+        NSString *path = [NSString stringWithFormat:@"%@/Image%d.png", dir, res];
+        if (![self.class isFileExist:path]) {
             return res; // 这一页不存在
         }
     }
@@ -327,12 +353,7 @@ typedef void(^TaskBlock)(void);
 -(void)setPreloadPage:(int)page {
     _preloadPage = page;
 }
-
-+(CGFloat)screenScale {
-    CGFloat scale = ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) ? [[[UIScreen mainScreen] valueForKey:@"scale"] floatValue] : 1.0f;
-    return scale;
+-(void)dealloc {
+    [self unInit];
 }
-
-
-
 @end

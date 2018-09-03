@@ -12,6 +12,7 @@
 typedef void(^PdfCacheCompleteBlock)(int page,UIImage *image);
 
 @interface PDFCacheOptimize : NSObject
+@property(nonatomic,assign) NSInteger totalPages;
 -(instancetype)init:(CGSize)size;
 -(instancetype)init:(CGSize)size cacheCount:(int)count ;
 -(instancetype)bindDocument:(CGPDFDocumentRef)docRef;
