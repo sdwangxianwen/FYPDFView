@@ -129,6 +129,7 @@
 		2166DFA4212FF3C200CC7B6E /* ZPDFPageController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZPDFPageController.m; sourceTree = "<group>"; };
 		2166DFA5212FF3C200CC7B6E /* ZPDFPageModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZPDFPageModel.h; sourceTree = "<group>"; };
 		2166DFA6212FF3C200CC7B6E /* ZPDFView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZPDFView.h; sourceTree = "<group>"; };
+		21D0A304213CC7EA005AFD24 /* FYPdfView.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = FYPdfView.podspec; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,16 +180,14 @@
 		2166DEEB212D023F00CC7B6E /* FYPDF */ = {
 			isa = PBXGroup;
 			children = (
+				21D0A304213CC7EA005AFD24 /* FYPdfView.podspec */,
 				2166DF9E212FF3C200CC7B6E /* PDFBrowser */,
 				2166DF30212FE0BC00CC7B6E /* AFNetworking */,
 				2166DEEC212D023F00CC7B6E /* AppDelegate.h */,
 				2166DEED212D023F00CC7B6E /* AppDelegate.m */,
 				2166DEEF212D023F00CC7B6E /* ViewController.h */,
 				2166DEF0212D023F00CC7B6E /* ViewController.m */,
-				2166DF2D212EB09700CC7B6E /* PDFCacheOptimize.h */,
-				2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */,
-				213C01C021351B66002B0E0A /* NSString+MD5.h */,
-				213C01BF21351B66002B0E0A /* NSString+MD5.m */,
+				21D0A303213CC793005AFD24 /* pdfView */,
 				2166DF27212D589700CC7B6E /* PdfCache.h */,
 				2166DF28212D589700CC7B6E /* PdfCache.m */,
 				2166DF21212D028C00CC7B6E /* PDFCollectionViewCell.h */,
@@ -292,6 +291,17 @@
 				2166DFA2212FF3C200CC7B6E /* ZPDFView.m */,
 			);
 			path = PDFBrowser;
+			sourceTree = "<group>";
+		};
+		21D0A303213CC793005AFD24 /* pdfView */ = {
+			isa = PBXGroup;
+			children = (
+				2166DF2D212EB09700CC7B6E /* PDFCacheOptimize.h */,
+				2166DF2E212EB09700CC7B6E /* PDFCacheOptimize.m */,
+				213C01C021351B66002B0E0A /* NSString+MD5.h */,
+				213C01BF21351B66002B0E0A /* NSString+MD5.m */,
+			);
+			path = pdfView;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
